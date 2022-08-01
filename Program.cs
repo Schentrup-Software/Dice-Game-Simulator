@@ -42,44 +42,42 @@ var gameResults = new List<GameResult>();
 
 for (int i = 0; i < 100000; i++)
 {
+    PlayerResult? bestPlayerResult = null;
 
-    var playerResults = players.Select(player => {
+    foreach (var player in players)
+    {
         var diceLeft = 5;
         var diceValuesKept = new List<int>();
         var numberOfRolls = 0;
+        var scoreToBeat = bestPlayerResult?.ChosenValues?.Sum() ?? int.MaxValue;
 
         do
         {
             var roll = GetDiceValues(diceLeft);
 
-            var diceKept = player.ChooseDice(roll).ToList();
+            var diceKept = player.ChooseDice(diceValuesKept.Sum(), scoreToBeat, roll).ToList();
             diceValuesKept.AddRange(diceKept);
             diceLeft -= diceKept.Count;
 
             numberOfRolls++;
+
+            if (diceValuesKept.Sum() > scoreToBeat)
+            {
+                break;
+            }
         } while (diceLeft > 0);
 
-        return new PlayerResult(player.Name, player.GetType().Name, diceValuesKept, numberOfRolls);
-    });
-
-    var minScore = int.MaxValue;
-    PlayerResult? winner = null;
-
-    foreach (var playerResult in playerResults)
-    {
-        var result = playerResult.ChosenValues.Aggregate((x, y) => x + y);
-        if (result < minScore)
+        if (diceValuesKept.Sum() < scoreToBeat)
         {
-            winner = playerResult;
-            minScore = result;
+            bestPlayerResult = new PlayerResult(player.Name, player.GetType().Name, diceValuesKept, numberOfRolls);
         }
     }
 
-    var gameResult = new GameResult(winner?.Name ?? "", winner?.ClassName ?? "", winner?.ChosenValues ?? Enumerable.Empty<int>());
+    var gameResult = new GameResult(bestPlayerResult?.Name ?? "", bestPlayerResult?.ClassName ?? "", bestPlayerResult?.ChosenValues ?? Enumerable.Empty<int>());
     gameResults.Add(gameResult);
 
-    //Console.WriteLine(gameResult.WinnerName + ": " + gameResult.WinningValues.Select(x => x.ToString()).Aggregate((x, y) => x + ", " + y));
-    //Console.WriteLine("Total: " + gameResult.WinningValues.Aggregate((x, y) => x + y));
+    var lastWinnerIndex = bestPlayerResult == null ? 0 : players.FindIndex(x => x.Name == bestPlayerResult?.Name);
+    players = players.Select((x, i) => players.ElementAt((i + lastWinnerIndex) % players.Count)).ToList();
 }
 
 Console.WriteLine(gameResults.GroupBy(x => x.WinnerName).OrderBy(x => x.Count()).Select(x => x.Key + ": " + x.Count()).Aggregate((x, y) => x + "\n" + y));

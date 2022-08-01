@@ -16,20 +16,20 @@ namespace DiceGameSimulator.Strategies
         {
             Name = name;
             DiceLeft1 = diceLeft1;
-            DiceLeft1 = diceLeft2;
+            DiceLeft2 = diceLeft2;
         }
 
-        public IEnumerable<int> ChooseDice(IEnumerable<int> givenDice)
+        public IEnumerable<int> ChooseDice(int currentScore, int currentBestScore, IEnumerable<int> givenDice)
         {
             var diceToKeep = new List<int>();
             var givenDiceList = givenDice.ToList();
 
             foreach (var dice in givenDiceList)
             {
-                if (dice < 2 && givenDiceList.Count <= DiceLeft1)
-                {
-                    diceToKeep.Add(dice);
-                } else if (dice < 3 && givenDiceList.Count <= DiceLeft2)
+                if (dice == 0 ||
+                    (dice < 2 && givenDiceList.Count <= DiceLeft1 && (dice + currentScore) < currentBestScore) ||
+                    (dice < 3 && givenDiceList.Count <= DiceLeft2 && (dice + currentScore) < currentBestScore)
+                )
                 {
                     diceToKeep.Add(dice);
                 }

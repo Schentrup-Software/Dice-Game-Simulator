@@ -10,6 +10,6 @@ namespace DiceGameSimulator.Strategies
     {
         public string Name { get; set; }
 
-        public IEnumerable<int> ChooseDice(IEnumerable<int> givenDice); 
+        public IEnumerable<int> ChooseDice(int currentScore, int currentBestScore, IEnumerable<int> givenDice); 
     }
 }

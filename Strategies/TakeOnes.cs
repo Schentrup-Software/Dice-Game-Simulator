@@ -17,14 +17,14 @@ namespace DiceGameSimulator.Strategies
             DiceLeft = diceLeft;
         }
 
-        public IEnumerable<int> ChooseDice(IEnumerable<int> givenDice)
+        public IEnumerable<int> ChooseDice(int currentScore, int currentBestScore, IEnumerable<int> givenDice)
         {
             var diceToKeep = new List<int>();
             var givenDiceList = givenDice.ToList();
 
             foreach (var dice in givenDiceList)
             {
-                if (dice < 2 && givenDiceList.Count <= DiceLeft)
+                if (dice == 0 || (dice < 2 && givenDiceList.Count <= DiceLeft && (dice + currentScore) < currentBestScore))
                 {
                     diceToKeep.Add(dice);
                 }
