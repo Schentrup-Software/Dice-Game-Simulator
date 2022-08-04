@@ -40,44 +40,49 @@ var players = new List<IDiceStrategy> {
 
 var gameResults = new List<GameResult>();
 
-for (int i = 0; i < 100000; i++)
+var playSets = GetKCombs<IDiceStrategy>(players, 5).ToList();
+
+foreach (var playSet in playSets)
 {
-    PlayerResult? bestPlayerResult = null;
-
-    foreach (var player in players)
+    for (int i = 0; i < 100; i++)
     {
-        var diceLeft = 5;
-        var diceValuesKept = new List<int>();
-        var numberOfRolls = 0;
-        var scoreToBeat = bestPlayerResult?.ChosenValues?.Sum() ?? int.MaxValue;
+        PlayerResult? bestPlayerResult = null;
 
-        do
+        foreach (var player in playSet)
         {
-            var roll = GetDiceValues(diceLeft);
+            var diceLeft = 5;
+            var diceValuesKept = new List<int>();
+            var numberOfRolls = 0;
+            var scoreToBeat = bestPlayerResult?.ChosenValues?.Sum() ?? int.MaxValue;
 
-            var diceKept = player.ChooseDice(diceValuesKept.Sum(), scoreToBeat, roll).ToList();
-            diceValuesKept.AddRange(diceKept);
-            diceLeft -= diceKept.Count;
-
-            numberOfRolls++;
-
-            if (diceValuesKept.Sum() > scoreToBeat)
+            do
             {
-                break;
+                var roll = GetDiceValues(diceLeft);
+
+                var diceKept = player.ChooseDice(diceValuesKept.Sum(), scoreToBeat, roll).ToList();
+                diceValuesKept.AddRange(diceKept);
+                diceLeft -= diceKept.Count;
+
+                numberOfRolls++;
+
+                if (diceValuesKept.Sum() > scoreToBeat)
+                {
+                    break;
+                }
+            } while (diceLeft > 0);
+
+            if (diceValuesKept.Sum() < scoreToBeat)
+            {
+                bestPlayerResult = new PlayerResult(player.Name, player.GetType().Name, diceValuesKept, numberOfRolls);
             }
-        } while (diceLeft > 0);
-
-        if (diceValuesKept.Sum() < scoreToBeat)
-        {
-            bestPlayerResult = new PlayerResult(player.Name, player.GetType().Name, diceValuesKept, numberOfRolls);
         }
+
+        var gameResult = new GameResult(bestPlayerResult?.Name ?? "", bestPlayerResult?.ClassName ?? "", bestPlayerResult?.ChosenValues ?? Enumerable.Empty<int>());
+        gameResults.Add(gameResult);
+
+        var lastWinnerIndex = bestPlayerResult == null ? 0 : players.FindIndex(x => x.Name == bestPlayerResult?.Name);
+        players = players.Select((x, i) => players.ElementAt((i + lastWinnerIndex) % players.Count)).ToList();
     }
-
-    var gameResult = new GameResult(bestPlayerResult?.Name ?? "", bestPlayerResult?.ClassName ?? "", bestPlayerResult?.ChosenValues ?? Enumerable.Empty<int>());
-    gameResults.Add(gameResult);
-
-    var lastWinnerIndex = bestPlayerResult == null ? 0 : players.FindIndex(x => x.Name == bestPlayerResult?.Name);
-    players = players.Select((x, i) => players.ElementAt((i + lastWinnerIndex) % players.Count)).ToList();
 }
 
 Console.WriteLine(gameResults.GroupBy(x => x.WinnerName).OrderBy(x => x.Count()).Select(x => x.Key + ": " + x.Count()).Aggregate((x, y) => x + "\n" + y));
@@ -91,4 +96,12 @@ IEnumerable<int> GetDiceValues(int numOfDice)
     {
         yield return dice[rand.Next(0, 6)];
     }
+}
+
+static IEnumerable<IEnumerable<T>>GetKCombs<T>(IEnumerable<T> list, int length) where T : IComparable
+{
+    if (length == 1) return list.Select(t => new T[] { t });
+    return GetKCombs(list, length - 1)
+        .SelectMany(t => list.Where(o => o.CompareTo(t.Last()) > 0),
+            (t1, t2) => t1.Concat(new T[] { t2 }));
 }

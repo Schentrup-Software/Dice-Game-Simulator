@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace DiceGameSimulator.Strategies
 {
-    public interface IDiceStrategy
+    public interface IDiceStrategy : IComparable
     {
         public string Name { get; set; }
 
-        public IEnumerable<int> ChooseDice(int currentScore, int currentBestScore, IEnumerable<int> givenDice); 
+        public IEnumerable<int> ChooseDice(int currentScore, int currentBestScore, IEnumerable<int> givenDice);
     }
 }

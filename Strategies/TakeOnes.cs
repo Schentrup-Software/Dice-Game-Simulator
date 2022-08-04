@@ -37,5 +37,15 @@ namespace DiceGameSimulator.Strategies
 
             return diceToKeep;
         }
+
+        public int CompareTo(object? obj)
+        {
+            if (obj is not IDiceStrategy)
+            {
+                return 1;
+            }
+            var newobj = (IDiceStrategy)obj;
+            return Name.CompareTo(newobj?.Name);
+        }
     }
 }
